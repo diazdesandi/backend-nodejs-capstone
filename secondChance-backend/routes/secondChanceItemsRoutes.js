@@ -41,6 +41,7 @@ router.get('/', async (req, res, next) => {
 
 // Add a new item
 router.post('/', upload.single('file'), async (req, res, next) => {
+    
     try {
         //Step 3: task 1 - insert code here
         const db = await connectToDatabase();
@@ -57,9 +58,9 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         const date_added = Math.floor(new Date().getTime() / 1000);
         secondChanceItem.date_added = date_added
 
-        secondChanceItem = await collection.insertOne(secondChanceItem);
+        secondChanceItem = await collection.insertOne(secondChanceItem)
 
-        res.status(201).json(secondChanceItem.ops[0]);
+        res.status(201).json(secondChanceItem);
     } catch (e) {
         next(e);
     }
@@ -67,6 +68,9 @@ router.post('/', upload.single('file'), async (req, res, next) => {
 
 // Get a single secondChanceItem by ID
 router.get('/:id', async (req, res, next) => {
+    logger.info('/:id called');
+    const id = req.params.id;
+
     try {
         //Step 4: task 1 - insert code here
         const db = await connectToDatabase();
@@ -87,11 +91,14 @@ router.get('/:id', async (req, res, next) => {
 
 // Update and existing item
 router.put('/:id', async (req, res, next) => {
+
+    const id = req.params.id;
+
     try {
         //Step 5: task 1 - insert code here
         const db = await connectToDatabase();
         //Step 5: task 2 - insert code here
-        const collection = db.collection("secondChanceItems");
+        const collection = db.collection(dbCollection);
         //Step 5: task 3 - insert code here
         const secondChanceItem = await collection.findOne({ id });
 
@@ -126,11 +133,14 @@ router.put('/:id', async (req, res, next) => {
 
 // Delete an existing item
 router.delete('/:id', async (req, res, next) => {
+
+    const id = req.params.id;
+
     try {
         //Step 6: task 1 - insert code here
         const db = await connectToDatabase();
         //Step 6: task 2 - insert code here
-        const collection = db.collection("secondChanceItems");
+        const collection = db.collection(dbCollection);
         //Step 6: task 3 - insert code here
         const secondChanceItem = await collection.findOne({ id });
 
