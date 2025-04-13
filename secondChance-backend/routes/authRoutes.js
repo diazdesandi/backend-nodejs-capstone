@@ -1,4 +1,5 @@
 const express = require('express');
+const { body, validationResult } = require('express-validator');
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const connectToDatabase = require('../models/db');
@@ -77,7 +78,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Task 5: Fetch user details from a database
-        const { firstName} = user;
+        const { firstName } = user;
         const userEmail = user.email;
         // Task 6: Create JWT authentication if passwords match with user._id as payload
         const payload = {
@@ -90,6 +91,57 @@ router.post('/login', async (req, res) => {
 
     } catch (e) {
         return res.status(500).send('Internal server error');
+    }
+});
+
+router.put('/update', async (req, res) => {
+    // Task 2: Validate the input using `validationResult` and return an appropriate message if you detect an error
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        logger.error('Validation errors in update request', errors.array());
+        return res.status(400).json({ errors: errors.array() });
+    }
+    try {
+        // Task 3: Check if `email` is present in the header and throw an appropriate error message if it is not present
+        const { email } = req.headers;
+
+        if (!email) {
+            logger.error("Email not found in request headers")
+            return res.status(400).json({ error: "Email not found in request headers" })
+        }
+        // Task 4: Connect to MongoDB
+        const db = await connectToDatabase();
+        const collection = db.collection("users");
+        // Task 5: Find the user credentials in database
+        const existingUser = await collection.findOne({ email });
+
+        if (!existingUser) {
+            logger.error("User does not exist")
+            return res.status(400).json({ error: "User does not exist" })
+        }
+        existingUser.updatedAt = new Date();
+
+
+        // Task 6: Update the user credentials in the database
+        const updatedUser = await collection.findOneAndUpdate(
+            { email },
+            { $set: existingUser },
+            { returnDocument: 'after' }
+        );
+
+        // Task 7: Create JWT authentication with `user._id` as a payload using the secret key from the .env file
+        const payload = {
+            user: {
+                id: updatedUser._id.toString(),
+            },
+        };
+
+        const authtoken = jwt.sign(payload, JWT_SECRET);
+
+        res.json({ authtoken });
+    } catch (e) {
+        return res.status(500).send('Internal server error');
+
     }
 });
 
